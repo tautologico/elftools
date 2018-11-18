@@ -4,7 +4,7 @@
 
 #lang racket
 
-(provide file-class-map data-encoding-map type-map machine-map)
+(provide file-class-map data-encoding-map abi-map type-map machine-map)
 (provide sec-type-map)
 (provide option-value option-symbol option-description)
 (provide integer->option symbol->option)
@@ -48,6 +48,25 @@
   (1 'little-endian    "Two's complement, little-endian order")
   (2 'big-endian       "Two's complement, big-endian order"))
 
+(define-option-map abi-map
+  (0  'unspecified-abi  "No extensions or unspecified ABI")
+  (1  'hpux             "Hewlett-Packard HP-UX")
+  (2  'netbsd           "NetBSD")
+  (3  'gnu              "GNU")
+  (6  'solaris          "Sun Solaris")
+  (7  'aix              "AIX")
+  (8  'irix             "IRIX")
+  (9  'freebsd          "FreeBSD")
+  (10 'tru64            "Compaq TRU-64 Unix")
+  (11 'modesto          "Novell Modesto")
+  (12 'openbsd          "Open BSD")
+  (13 'openvms          "Open VMS")
+  (14 'nsk              "Hewlett-Packard Non-Stop Kernel")
+  (15 'aros             "Amiga Research OS")
+  (16 'fenixos          "FenixOS")
+  (17 'cloudabi         "Nuxi Cloud ABI")
+  (18 'openvos          "Stratus Technologies OpenVOS"))
+  
 (define-option-map type-map
   (0 'none        "No file type")
   (1 'relocatable "Relocatable file")
