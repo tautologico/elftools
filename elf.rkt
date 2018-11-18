@@ -5,6 +5,8 @@
 #lang racket
 
 (provide elf:read
+         (struct-out elf:header)
+         (struct-out elf:id)
          (prefix-out elf: open-file)
          (prefix-out elf: read-header)
          (prefix-out elf: read-section-header)
@@ -16,8 +18,8 @@
   (require rackunit))
 
 ;; ELF header identification
-(struct elf:header-ident
-  (class byte-order version abi abi-version) #:transparent)
+(struct elf:id
+  (class encoding version abi abi-version) #:transparent)
 
 ;; ELF header
 (struct elf:header
@@ -29,11 +31,11 @@
 
 ;; Test if the file is big endian based on header ident
 (define (big-endian? ident)
-  (eq? (option-symbol (elf:header-ident-byte-order ident))
+  (eq? (option-symbol (elf:id-encoding ident))
        'big-endian))
 
 (define (64-bit? ident)
-  (eq? (option-symbol (elf:header-ident-class ident)) '64-bit))
+  (eq? (option-symbol (elf:id-class ident)) '64-bit))
 
 ;; Read an Elf32_Half data item
 (define (read-half in ident)
@@ -45,7 +47,7 @@
   (define bs (read-bytes 4 in))
   (integer-bytes->integer bs #f (big-endian? ident)))
 
-;; Read an address depending on byte-order and word-size
+;; Read an address depending on byte order and word-size
 (define (read-address in ident)
   (define size (if (64-bit? ident) 8 4))
   (define bs (read-bytes size in))
@@ -62,12 +64,13 @@
   (define abi          (read-byte in))
   (define abi-version  (read-byte in))
   (read-bytes 7 in)   ; discard padding bytes in identification
-  (elf:header-ident (integer->option file-class-map class-byte)
-                    (integer->option data-encoding-map order-byte)
-                    version-byte
-                    abi abi-version))
+  (elf:id (integer->option file-class-map class-byte)
+          (integer->option data-encoding-map order-byte)
+          version-byte
+          (integer->option abi-map abi)
+          abi-version))
 
-
+;; TODO: processor-specific flags
 (define (read-header in)
   (unless (check-elf-magic? in) (error "Invalid ELF magic number: not an ELF file"))
   (define ident   (read-header-ident in))
@@ -175,15 +178,15 @@
 
   (define hdr1 (call-with-input-bytes hdr1-bytes read-header))
 
-  (check-equal? (elf:header-ident-class (elf:header-id hdr1))
+  (check-equal? (elf:id-class (elf:header-id hdr1))
                 (symbol->option file-class-map '64-bit))
-  (check-equal? (elf:header-ident-byte-order (elf:header-id hdr1))
+  (check-equal? (elf:id-encoding (elf:header-id hdr1))
                 (symbol->option data-encoding-map 'little-endian))
-  (check-equal? (elf:header-ident-version (elf:header-id hdr1))
+  (check-equal? (elf:id-version (elf:header-id hdr1))
                 1)
-  (check-equal? (elf:header-ident-abi (elf:header-id hdr1))
+  (check-equal? (elf:id-abi (elf:header-id hdr1))
                 0)
-  (check-equal? (elf:header-ident-abi-version (elf:header-id hdr1))
+  (check-equal? (elf:id-abi-version (elf:header-id hdr1))
                 0)
 
   (check-equal? (elf:header-type hdr1) (symbol->option type-map 'executable))
