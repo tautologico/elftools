@@ -7,6 +7,7 @@
 (provide elf:read
          (struct-out elf:header)
          (struct-out elf:id)
+         (struct-out elf:sec-header)
          (prefix-out elf: open-file)
          (prefix-out elf: read-header)
          (prefix-out elf: read-section-header)
@@ -205,7 +206,7 @@
 
   ;; string table testing
   (define strtable
-    (bytes-append 
+    (bytes-append
      #"\0.symtab\0.strtab\0.shstrtab\0.interp\0.note.ABI-tag\0"
      #".note.gnu.build-id\0.gnu.hash\0.dynsym\0.dynstr\0.gnu.version\0"
      #".gnu.version_r\0.rela.dyn\0.rela.plt\0.init\0.plt.got\0.text\0"
@@ -217,4 +218,3 @@
   (check-equal? (get-string-by-index strtable 5) "tab")
   (check-equal? (get-string-by-index strtable 27) ".interp")
   (check-equal? (get-string-by-index strtable 49) ".note.gnu.build-id"))
-
