@@ -245,14 +245,14 @@
   (define offset #f)
   (if (64-bit? id)
       (begin
-        (set! flags (read-word in id))
+        (set! flags (decode-flags (read-word in id) segment-flags))
         (set! offset (read-address in id)))
       (set! offset (read-word in id)))
   (define vaddr  (read-address in id))
   (define paddr  (read-address in id))
   (define filesz (read-address in id))
   (define memsz  (read-address in id))
-  (unless (64-bit? id) (set! flags (read-word in id)))
+  (unless (64-bit? id) (set! flags (decode-flags (read-word in id) segment-flags)))
   (define align  (read-address in id))
   (elf:prog-header type offset vaddr paddr filesz memsz flags align))
 

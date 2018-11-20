@@ -7,6 +7,10 @@
 (require "elf.rkt")
 (require "constants.rkt")
 
+(define (flags->string flags)
+  (cond [(empty? flags) "None"]
+        [else (string-join (map flag-description flags) " | ")]))
+  
 (define (show-program-header f hdr i)
   (define prog-hdr (elf:read-program-header f hdr i))
   (define type (elf:prog-header-type prog-hdr))
@@ -15,7 +19,7 @@
   (printf "Type          : ~a - ~a\n" (option-value type)
                                   (option-description type))
   (printf "Offset        : ~a\n" (elf:prog-header-offset prog-hdr))
-  (printf "Flags         : ~a\n" (elf:prog-header-flags prog-hdr))  ;; TODO flags
+  (printf "Flags         : ~a\n" (flags->string (elf:prog-header-flags prog-hdr)))
   (printf "Virt. Address : ~a\n" (elf:prog-header-vaddr prog-hdr))
   (printf "Phys. Address : ~a\n" (elf:prog-header-paddr prog-hdr))
   (printf "File Size     : ~a\n" (elf:prog-header-filesz prog-hdr))

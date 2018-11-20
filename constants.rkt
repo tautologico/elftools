@@ -6,10 +6,13 @@
 
 (provide file-class-map data-encoding-map abi-map type-map machine-map)
 (provide sec-type-map segment-type-map)
+(provide section-attr-flags segment-flags)
 (provide option-value option-symbol option-description)
-(provide integer->option symbol->option)
+(provide flag-value flag-symbol flag-description)
+(provide integer->option symbol->option decode-flags)
 
 (struct option-map (int->option symbol->option))
+(struct flags (values symbol->flag))
 
 (define-syntax-rule (define-option-map name (i sym str) ...)
   (define name
@@ -20,6 +23,14 @@
 (define (make-unknown-option int-val)
   (vector int-val 'unknown "Unknown value"))
 
+;; define a flags structure
+;; the flags must be specified in ascending order of flag values
+(define-syntax-rule (define-flags name (i sym str) ...)
+  (define name
+    (flags
+     (vector (vector i sym str) ...)
+     (apply hasheqv (flatten (list (list sym (vector i sym str)) ...))))))
+
 ;; TODO
 ;; Integer maps could contain ranges to test for processor-specific
 ;; or user-defined options
@@ -28,9 +39,6 @@
          (hash-ref (option-map-int->option m) i)]
         [else (make-unknown-option i)]))
 
-(define (decode-integer-flags m i)
-  0)
-
 (define (symbol->option m s)
   (hash-ref (option-map-symbol->option m) s))
 
@@ -38,6 +46,18 @@
 (define (option-symbol d)      (vector-ref d 1))
 (define (option-description d) (vector-ref d 2))
 
+(define (flag-value d)       (vector-ref d 0))
+(define (flag-symbol d)      (vector-ref d 1))
+(define (flag-description d) (vector-ref d 2))
+
+(define (decode-flags val flags)
+  (flatten
+   (for/list ([fl (in-vector (flags-values flags))])
+     (if (zero? (bitwise-and (vector-ref fl 0) val))
+         '()
+         (list fl)))))
+
+;; --- constant definitions --------------------------------
 (define-option-map file-class-map
   (0 'invalid-class "Invalid class")
   (1 '32-bit        "32-bit")
@@ -135,7 +155,7 @@
   (18   'stshndx    "Symbol table SHN_INDEX references"))
 
 ;; TODO: OS-specific and processor-specific flags
-(define-option-map section-attr-flags
+(define-flags section-attr-flags
   (#x01  'write      "WRITE")
   (#x02  'alloc      "ALLOC")
   (#x04  'exec       "EXECINSTR")
@@ -160,7 +180,7 @@
   (#x07  'tls         "Thread-Local Storage"))
 
 ;; TODO: OS mask and processor mask
-(define-option-map segment-flags
+(define-flags segment-flags
   (#x01  'exec        "Execute")
   (#x02  'write       "Write")
   (#x03  'read        "Read"))
