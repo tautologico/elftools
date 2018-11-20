@@ -5,7 +5,7 @@
 #lang racket
 
 (provide file-class-map data-encoding-map abi-map type-map machine-map)
-(provide sec-type-map)
+(provide sec-type-map segment-type-map)
 (provide option-value option-symbol option-description)
 (provide integer->option symbol->option)
 
@@ -13,7 +13,7 @@
 
 (define-syntax-rule (define-option-map name (i sym str) ...)
   (define name
-    (option-map 
+    (option-map
      (apply hasheqv (flatten (list (list i (vector i sym str)) ...)))
      (apply hasheqv (flatten (list (list sym (vector i sym str)) ...))))))
 
@@ -66,7 +66,7 @@
   (16 'fenixos          "FenixOS")
   (17 'cloudabi         "Nuxi Cloud ABI")
   (18 'openvos          "Stratus Technologies OpenVOS"))
-  
+
 (define-option-map type-map
   (0 'none        "No file type")
   (1 'relocatable "Relocatable file")
@@ -148,4 +148,19 @@
   (#x400 'tls        "TLS")
   (#x800 'compressed "COMPRESSED"))
 
+;; TODO: OS-specific and processor-specific flags
+(define-option-map segment-type-map
+  (#x00  'null-type   "Unused")
+  (#x01  'load        "Loadable segment")
+  (#x02  'dynamic     "Dynamic linking information")
+  (#x03  'interp      "Program interpreter path")
+  (#x04  'note        "Note, auxiliary information")
+  (#x05  'shlib       "Reserved segment type (unspecified)")
+  (#x06  'phdr        "Location and size of program header")
+  (#x07  'tls         "Thread-Local Storage"))
 
+;; TODO: OS mask and processor mask
+(define-option-map segment-flags
+  (#x01  'exec        "Execute")
+  (#x02  'write       "Write")
+  (#x03  'read        "Read"))

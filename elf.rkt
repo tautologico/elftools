@@ -8,10 +8,14 @@
          (struct-out elf:header)
          (struct-out elf:id)
          (struct-out elf:sec-header)
+         (struct-out elf:prog-header)
          (prefix-out elf: open-file)
          (prefix-out elf: read-header)
          (prefix-out elf: read-section-header)
-         (prefix-out elf: section-name))
+         (prefix-out elf: read-section)
+         (prefix-out elf: section-name)
+         (prefix-out elf: read-program-header)
+         (prefix-out elf: read-segment))
 
 (require "constants.rkt")
 
@@ -218,3 +222,40 @@
   (check-equal? (get-string-by-index strtable 5) "tab")
   (check-equal? (get-string-by-index strtable 27) ".interp")
   (check-equal? (get-string-by-index strtable 49) ".note.gnu.build-id"))
+
+;; --- Program headers -------------------------------------
+
+(struct elf:prog-header
+  (type offset vaddr paddr filesz memsz flags align)
+  #:transparent)
+
+(define (program-header-offset hdr index)
+  (when (>= index (elf:header-ph-num hdr))
+    (error "Invalid index for program header: " index))
+  (+ (elf:header-prog-header-off hdr)
+     (* (elf:header-ph-size hdr)
+        index)))
+
+(define (read-program-header in hdr index)
+  (define off (program-header-offset hdr index))
+  (define id  (elf:header-id hdr))
+  (file-position in off)
+  (define type (integer->option segment-type-map (read-word in id)))
+  (define flags #f)
+  (define offset #f)
+  (if (64-bit? id)
+      (begin
+        (set! flags (read-word in id))
+        (set! offset (read-address in id)))
+      (set! offset (read-word in id)))
+  (define vaddr  (read-address in id))
+  (define paddr  (read-address in id))
+  (define filesz (read-address in id))
+  (define memsz  (read-address in id))
+  (unless (64-bit? id) (set! flags (read-word in id)))
+  (define align  (read-address in id))
+  (elf:prog-header type offset vaddr paddr filesz memsz flags align))
+
+(define (read-segment in prog-hdr)
+  (file-position in (elf:prog-header-offset prog-hdr))
+  (read-bytes (elf:prog-header-filesz prog-hdr) in))
