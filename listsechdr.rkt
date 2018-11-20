@@ -7,13 +7,17 @@
 (require "elf.rkt")
 (require "constants.rkt")
 
+(define (flags->string flags)
+  (cond [(empty? flags) "None"]
+        [else (string-join (map flag-description flags) " | ")]))
+
 (define (show-section-header f hdr i)
   (define sec-hdr (elf:read-section-header f hdr i))
   (printf "=====\n")
   (printf "Section #~a | Name: ~a\n" i (elf:section-name sec-hdr))
   (printf "Type      : ~a - ~a\n" (option-value (elf:sec-header-type sec-hdr))
                                   (option-description (elf:sec-header-type sec-hdr)))
-  (printf "Flags     : ~a\n" (elf:sec-header-flags sec-hdr))  ;; TODO flags
+  (printf "Flags     : ~a\n" (flags->string (elf:sec-header-flags sec-hdr)))
   (printf "Address   : ~a\n" (elf:sec-header-addr sec-hdr))
   (printf "Offset    : ~a\n" (elf:sec-header-offset sec-hdr))
   (printf "Size      : ~a\n" (elf:sec-header-size sec-hdr))

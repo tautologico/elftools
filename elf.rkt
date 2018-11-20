@@ -115,7 +115,7 @@
   (file-position in off)
   (define name   (read-word in id))
   (define type   (integer->option sec-type-map (read-word in id)))
-  (define flags  (read-address in id))
+  (define flags  (decode-flags (read-address in id) section-attr-flags))
   (define addr   (read-address in id))
   (define offset (read-address in id))
   (define size   (read-address in id))
